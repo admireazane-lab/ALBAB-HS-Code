@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const path = require('path'); // <-- MEMANGGIL MODULE PATH
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,7 +9,7 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-// app.use(express.static('public')); // <-- KITA NON-AKTIFKAN INI DULU
+app.use(express.static('public')); // Menyajikan file frontend
 
 // Konfigurasi AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
@@ -26,13 +25,6 @@ const model = genAI.getGenerativeModel({
         4. Selalu sebutkan dasar hukum (Pasal/UU/PMK) jika relevan.
         5. Tujuanmu adalah memberikan edukasi kepabeanan yang akurat.
     `
-});
-
-// Endpoint Utama untuk menyajikan index.html
-// Ini akan memperbaiki error 404 pada domain utama.
-app.get('/', (req, res) => {
-    // Cari index.html di dalam folder 'public'
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Endpoint Chat
