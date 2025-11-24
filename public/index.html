@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asisten Virtual Bea Cukai</title>
+    <style>
+        :root {
+            --bc-blue: #003366; /* Warna Khas Bea Cukai */
+            --bc-yellow: #FFCC00;
+            --bg-light: #f4f4f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+
+        .header {
+            background-color: var(--bc-blue);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--bc-yellow);
+        }
+
+        .header h1 { margin: 0; font-size: 1.2rem; }
+        .header p { margin: 5px 0 0; font-size: 0.8rem; opacity: 0.8; }
+
+        #chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .user-message {
+            background-color: #e3f2fd;
+            color: #333;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .bot-message {
+            background-color: #f0f0f0;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border-left: 4px solid var(--bc-blue);
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        button {
+            background-color: var(--bc-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover { background-color: #002244; }
+        
+        /* Loading Dot Animation */
+        .typing-indicator { font-style: italic; color: #888; font-size: 0.8rem; display: none; margin-left: 20px;}
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="header">
+            <h1>KLINIK KEPABEANAN VIRTUAL</h1>
+            <p>Tanya Jawab Seputar Bea, Cukai, dan Pajak Impor</p>
+        </div>
+        
+        <div id="chat-box">
+            <div class="message bot-message">
+                Selamat datang. Saya adalah ahli kepabeanan dan cukai. Silakan ajukan pertanyaan mengenai regulasi impor, ekspor, atau barang bawaan penumpang. Sebutkan detail barang untuk klasifikasi HS Code yang akurat.
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="loading">Sedang memeriksa peraturan...</div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Contoh: Berapa bea masuk impor iPhone 15?" onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()">Kirim</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const loading = document.getElementById('loading');
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Tampilkan pesan user
+            appendMessage(text, 'user-message');
+            userInput.value = '';
+            
+            // Tampilkan loading
+            loading.style.display = 'block';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                // Kirim ke Backend (Localhost)
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await response.json();
+                
+                // Tampilkan balasan bot
+                loading.style.display = 'none';
+                appendMessage(data.reply, 'bot-message');
+
+            } catch (error) {
+                loading.style.display = 'none';
+                appendMessage("Maaf, terjadi kesalahan koneksi ke server.", 'bot-message');
+            }
+        }
+
+        function appendMessage(text, className) {
+            const div = document.createElement('div');
+            div.classList.add('message', className);
+            
+            // Konversi markdown simpel (bold) ke HTML
+            // (Optional: gunakan library 'marked' untuk markdown penuh)
+            let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            formattedText = formattedText.replace(/\n/g, '<br>');
+            
+            div.innerHTML = formattedText;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
